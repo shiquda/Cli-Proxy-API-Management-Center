@@ -177,6 +177,10 @@
   }
 }
 
+.statCardWide {
+  grid-column: span 6;
+}
+
 @include mobile {
   .statCard:nth-child(-n + 2) {
     grid-column: auto;
@@ -184,6 +188,10 @@
     .statValue {
       font-size: 28px;
     }
+  }
+
+  .statCardWide {
+    grid-column: auto;
   }
 }
 

@@ -224,8 +224,15 @@ export function UsagePage() {
   const nowMs = lastRefreshedAt?.getTime() ?? 0;
 
   // Sparklines hook
-  const { requestsSparkline, tokensSparkline, rpmSparkline, tpmSparkline, costSparkline } =
-    useSparklines({ usage: filteredUsage, loading, nowMs });
+  const {
+    requestsSparkline,
+    tokensSparkline,
+    cacheRateSparkline,
+    successRateSparkline,
+    rpmSparkline,
+    tpmSparkline,
+    costSparkline
+  } = useSparklines({ usage: filteredUsage, loading, nowMs });
 
   // Chart data hook
   const {
@@ -328,6 +335,8 @@ export function UsagePage() {
         sparklines={{
           requests: requestsSparkline,
           tokens: tokensSparkline,
+          cacheRate: cacheRateSparkline,
+          successRate: successRateSparkline,
           rpm: rpmSparkline,
           tpm: tpmSparkline,
           cost: costSparkline,
