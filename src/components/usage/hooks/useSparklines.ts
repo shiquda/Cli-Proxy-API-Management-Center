@@ -30,25 +30,47 @@ export interface UseSparklinesOptions {
 export interface UseSparklinesReturn {
   requestsSparkline: SparklineBundle | null;
   tokensSparkline: SparklineBundle | null;
+  cacheRateSparkline: SparklineBundle | null;
+  successRateSparkline: SparklineBundle | null;
   rpmSparkline: SparklineBundle | null;
   tpmSparkline: SparklineBundle | null;
   costSparkline: SparklineBundle | null;
 }
 
+const getCachedTokens = (detail: ReturnType<typeof collectUsageDetails>[number]): number => {
+  const tokens = detail.tokens;
+  return Math.max(
+    typeof tokens.cached_tokens === 'number' ? Math.max(tokens.cached_tokens, 0) : 0,
+    typeof tokens.cache_tokens === 'number' ? Math.max(tokens.cache_tokens, 0) : 0
+  );
+};
+
+const getInputTokens = (detail: ReturnType<typeof collectUsageDetails>[number]): number => {
+  const tokens = detail.tokens;
+  return typeof tokens.input_tokens === 'number' ? Math.max(tokens.input_tokens, 0) : 0;
+};
+
 export function useSparklines({ usage, loading, nowMs }: UseSparklinesOptions): UseSparklinesReturn {
   const lastHourSeries = useMemo(() => {
-    if (!usage) return { labels: [], requests: [], tokens: [] };
+    if (!usage) {
+      return { labels: [], requests: [], tokens: [], cacheRate: [], successRate: [] };
+    }
     if (!Number.isFinite(nowMs) || nowMs <= 0) {
-      return { labels: [], requests: [], tokens: [] };
+      return { labels: [], requests: [], tokens: [], cacheRate: [], successRate: [] };
     }
     const details = collectUsageDetails(usage);
-    if (!details.length) return { labels: [], requests: [], tokens: [] };
+    if (!details.length) {
+      return { labels: [], requests: [], tokens: [], cacheRate: [], successRate: [] };
+    }
 
     const windowMinutes = 60;
     const now = nowMs;
     const windowStart = now - windowMinutes * 60 * 1000;
     const requestBuckets = new Array(windowMinutes).fill(0);
     const tokenBuckets = new Array(windowMinutes).fill(0);
+    const successBuckets = new Array(windowMinutes).fill(0);
+    const inputTokenBuckets = new Array(windowMinutes).fill(0);
+    const cachedTokenBuckets = new Array(windowMinutes).fill(0);
 
     details.forEach((detail) => {
       const timestamp = detail.__timestampMs ?? 0;
@@ -61,6 +83,11 @@ export function useSparklines({ usage, loading, nowMs }: UseSparklinesOptions): 
       );
       requestBuckets[minuteIndex] += 1;
       tokenBuckets[minuteIndex] += extractTotalTokens(detail);
+      if (!detail.failed) {
+        successBuckets[minuteIndex] += 1;
+      }
+      inputTokenBuckets[minuteIndex] += getInputTokens(detail);
+      cachedTokenBuckets[minuteIndex] += getCachedTokens(detail);
     });
 
     const labels = requestBuckets.map((_, idx) => {
@@ -70,7 +97,22 @@ export function useSparklines({ usage, loading, nowMs }: UseSparklinesOptions): 
       return `${h}:${m}`;
     });
 
-    return { labels, requests: requestBuckets, tokens: tokenBuckets };
+    const cacheRateBuckets = cachedTokenBuckets.map((cached, idx) => {
+      const input = inputTokenBuckets[idx];
+      return input > 0 ? (cached / input) * 100 : 0;
+    });
+    const successRateBuckets = successBuckets.map((success, idx) => {
+      const total = requestBuckets[idx];
+      return total > 0 ? (success / total) * 100 : 0;
+    });
+
+    return {
+      labels,
+      requests: requestBuckets,
+      tokens: tokenBuckets,
+      cacheRate: cacheRateBuckets,
+      successRate: successRateBuckets,
+    };
   }, [nowMs, usage]);
 
   const buildSparkline = useCallback(
@@ -135,6 +177,26 @@ export function useSparklines({ usage, loading, nowMs }: UseSparklinesOptions): 
     [buildSparkline, lastHourSeries.labels, lastHourSeries.requests]
   );
 
+  const cacheRateSparkline = useMemo(
+    () =>
+      buildSparkline(
+        { labels: lastHourSeries.labels, data: lastHourSeries.cacheRate },
+        '#06b6d4',
+        'rgba(6, 182, 212, 0.18)'
+      ),
+    [buildSparkline, lastHourSeries.cacheRate, lastHourSeries.labels]
+  );
+
+  const successRateSparkline = useMemo(
+    () =>
+      buildSparkline(
+        { labels: lastHourSeries.labels, data: lastHourSeries.successRate },
+        '#10b981',
+        'rgba(16, 185, 129, 0.18)'
+      ),
+    [buildSparkline, lastHourSeries.labels, lastHourSeries.successRate]
+  );
+
   const tpmSparkline = useMemo(
     () =>
       buildSparkline(
@@ -158,6 +220,8 @@ export function useSparklines({ usage, loading, nowMs }: UseSparklinesOptions): 
   return {
     requestsSparkline,
     tokensSparkline,
+    cacheRateSparkline,
+    successRateSparkline,
     rpmSparkline,
     tpmSparkline,
     costSparkline

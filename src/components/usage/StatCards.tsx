@@ -2,9 +2,11 @@ import { useMemo, type CSSProperties, type ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Line } from 'react-chartjs-2';
 import {
+  IconCheck,
   IconDiamond,
   IconDollarSign,
   IconSatellite,
+  IconInfo,
   IconTimer,
   IconTrendingUp,
 } from '@/components/ui/icons';
@@ -35,6 +37,7 @@ interface StatCardData {
   value: string;
   meta?: ReactNode;
   trend: SparklineBundle | null;
+  wide?: boolean;
 }
 
 export interface StatCardsProps {
@@ -45,11 +48,27 @@ export interface StatCardsProps {
   sparklines: {
     requests: SparklineBundle | null;
     tokens: SparklineBundle | null;
+    cacheRate: SparklineBundle | null;
+    successRate: SparklineBundle | null;
     rpm: SparklineBundle | null;
     tpm: SparklineBundle | null;
     cost: SparklineBundle | null;
   };
 }
+
+const getCachedTokens = (tokens: { cached_tokens?: number; cache_tokens?: number }): number =>
+  Math.max(
+    typeof tokens.cached_tokens === 'number' ? Math.max(tokens.cached_tokens, 0) : 0,
+    typeof tokens.cache_tokens === 'number' ? Math.max(tokens.cache_tokens, 0) : 0
+  );
+
+const getInputTokens = (tokens: { input_tokens?: number }): number =>
+  typeof tokens.input_tokens === 'number' ? Math.max(tokens.input_tokens, 0) : 0;
+
+const formatPercentValue = (value: number | null): string => {
+  if (value === null || !Number.isFinite(value)) return '--';
+  return `${value.toFixed(1)}%`;
+};
 
 export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: StatCardsProps) {
   const { t } = useTranslation();
@@ -60,9 +79,15 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
 
   const hasPrices = Object.keys(modelPrices).length > 0;
 
-  const { tokenBreakdown, rateStats, totalCost, latencyStats } = useMemo(() => {
+  const { tokenBreakdown, qualityStats, rateStats, totalCost, latencyStats } = useMemo(() => {
     const empty = {
-      tokenBreakdown: { cachedTokens: 0, reasoningTokens: 0 },
+      tokenBreakdown: { cachedTokens: 0, inputTokens: 0, reasoningTokens: 0 },
+      qualityStats: {
+        cacheRate: null as number | null,
+        successRate: null as number | null,
+        successCount: 0,
+        failureCount: 0,
+      },
       rateStats: { rpm: 0, tpm: 0, windowMinutes: 30, requestCount: 0, tokenCount: 0 },
       totalCost: 0,
       latencyStats: {
@@ -79,8 +104,11 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
     const latencyStats = calculateLatencyStatsFromDetails(details);
 
     let cachedTokens = 0;
+    let inputTokens = 0;
     let reasoningTokens = 0;
     let totalCost = 0;
+    let successCount = 0;
+    let failureCount = 0;
 
     const now = nowMs;
     const windowMinutes = 30;
@@ -91,12 +119,15 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
 
     details.forEach((detail) => {
       const tokens = detail.tokens;
-      cachedTokens += Math.max(
-        typeof tokens.cached_tokens === 'number' ? Math.max(tokens.cached_tokens, 0) : 0,
-        typeof tokens.cache_tokens === 'number' ? Math.max(tokens.cache_tokens, 0) : 0
-      );
+      cachedTokens += getCachedTokens(tokens);
+      inputTokens += getInputTokens(tokens);
       if (typeof tokens.reasoning_tokens === 'number') {
         reasoningTokens += tokens.reasoning_tokens;
+      }
+      if (detail.failed) {
+        failureCount += 1;
+      } else {
+        successCount += 1;
       }
 
       const timestamp = detail.__timestampMs ?? 0;
@@ -116,8 +147,15 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
     });
 
     const denominator = windowMinutes > 0 ? windowMinutes : 1;
+    const totalRequests = successCount + failureCount;
     return {
-      tokenBreakdown: { cachedTokens, reasoningTokens },
+      tokenBreakdown: { cachedTokens, inputTokens, reasoningTokens },
+      qualityStats: {
+        cacheRate: inputTokens > 0 ? (cachedTokens / inputTokens) * 100 : null,
+        successRate: totalRequests > 0 ? (successCount / totalRequests) * 100 : null,
+        successCount,
+        failureCount,
+      },
       rateStats: {
         rpm: requestCount / denominator,
         tpm: tokenCount / denominator,
@@ -182,6 +220,52 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
       trend: sparklines.tokens,
     },
     {
+      key: 'cache-rate',
+      label: t('usage_stats.cache_rate'),
+      icon: <IconInfo size={16} />,
+      accent: '#06b6d4',
+      accentSoft: 'rgba(6, 182, 212, 0.18)',
+      accentBorder: 'rgba(6, 182, 212, 0.32)',
+      value: loading ? '-' : formatPercentValue(qualityStats.cacheRate),
+      meta: (
+        <>
+          <span className={styles.statMetaItem}>
+            {t('usage_stats.cached_tokens')}:{' '}
+            {loading ? '-' : formatCompactNumber(tokenBreakdown.cachedTokens)}
+          </span>
+          <span className={styles.statMetaItem}>
+            {t('usage_stats.input_tokens')}:{' '}
+            {loading ? '-' : formatCompactNumber(tokenBreakdown.inputTokens)}
+          </span>
+        </>
+      ),
+      trend: sparklines.cacheRate,
+      wide: true,
+    },
+    {
+      key: 'success-rate',
+      label: t('usage_stats.success_rate'),
+      icon: <IconCheck size={16} />,
+      accent: '#10b981',
+      accentSoft: 'rgba(16, 185, 129, 0.18)',
+      accentBorder: 'rgba(16, 185, 129, 0.32)',
+      value: loading ? '-' : formatPercentValue(qualityStats.successRate),
+      meta: (
+        <>
+          <span className={styles.statMetaItem}>
+            <span className={styles.statMetaDot} style={{ backgroundColor: '#10b981' }} />
+            {t('usage_stats.success_requests')}: {loading ? '-' : qualityStats.successCount}
+          </span>
+          <span className={styles.statMetaItem}>
+            <span className={styles.statMetaDot} style={{ backgroundColor: '#c65746' }} />
+            {t('usage_stats.failed_requests')}: {loading ? '-' : qualityStats.failureCount}
+          </span>
+        </>
+      ),
+      trend: sparklines.successRate,
+      wide: true,
+    },
+    {
       key: 'rpm',
       label: t('usage_stats.rpm_30m'),
       icon: <IconTimer size={16} />,
@@ -243,7 +327,7 @@ export function StatCards({ usage, loading, modelPrices, nowMs, sparklines }: St
       {statsCards.map((card) => (
         <div
           key={card.key}
-          className={styles.statCard}
+          className={`${styles.statCard} ${card.wide ? styles.statCardWide : ''}`}
           style={
             {
               '--accent': card.accent,

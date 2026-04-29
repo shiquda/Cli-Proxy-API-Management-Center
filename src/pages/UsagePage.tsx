@@ -226,6 +226,8 @@ export function UsagePage() {
   const {
     requestsSparkline,
     tokensSparkline,
+    cacheRateSparkline,
+    successRateSparkline,
     rpmSparkline,
     tpmSparkline,
     costSparkline
@@ -332,6 +334,8 @@ export function UsagePage() {
         sparklines={{
           requests: requestsSparkline,
           tokens: tokensSparkline,
+          cacheRate: cacheRateSparkline,
+          successRate: successRateSparkline,
           rpm: rpmSparkline,
           tpm: tpmSparkline,
           cost: costSparkline
