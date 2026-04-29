@@ -4,10 +4,31 @@ on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version, for example v1.2.3'
+        required: true
+        type: string
+      draft:
+        description: 'Create as draft release'
+        required: false
+        default: false
+        type: boolean
+      prerelease:
+        description: 'Create as prerelease'
+        required: false
+        default: false
+        type: boolean
 
 jobs:
   build-and-release:
     runs-on: ubuntu-latest
+
+    env:
+      RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+      RELEASE_DRAFT: ${{ github.event_name == 'workflow_dispatch' && inputs.draft || false }}
+      RELEASE_PRERELEASE: ${{ github.event_name == 'workflow_dispatch' && inputs.prerelease || false }}
 
     permissions:
       contents: write
@@ -28,10 +49,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate release version
+        run: |
+          set -euo pipefail
+          if ! printf '%s' "${RELEASE_VERSION}" | grep -Eq '^v[0-9]+(\.[0-9]+){1,2}([-.][0-9A-Za-z.-]+)?$'; then
+            echo "Release version must look like v1.2.3, got: ${RELEASE_VERSION}" >&2
+            exit 1
+          fi
+
       - name: Build all-in-one HTML
         run: npm run build
         env:
-          VERSION: ${{ github.ref_name }}
+          VERSION: ${{ env.RELEASE_VERSION }}
 
       - name: Prepare release assets
         run: |
@@ -42,12 +71,17 @@ jobs:
       - name: Generate release notes
         run: |
           set -euo pipefail
-          current_tag="${GITHUB_REF_NAME}"
+          current_tag="${RELEASE_VERSION}"
+          if git rev-parse -q --verify "refs/tags/${current_tag}" >/dev/null; then
+            end_ref="${current_tag}"
+          else
+            end_ref="HEAD"
+          fi
           previous_tag="$(git tag --list 'v*' --sort=-v:refname | grep -v "^${current_tag}$" | head -n 1 || true)"
           if [ -n "${previous_tag}" ]; then
-            range="${previous_tag}..${current_tag}"
+            range="${previous_tag}..${end_ref}"
           else
-            range="${current_tag}"
+            range="${end_ref}"
           fi
 
           : > release-notes.md
@@ -56,9 +90,11 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
+          tag_name: ${{ env.RELEASE_VERSION }}
+          target_commitish: ${{ github.sha }}
           files: dist/management.html
           body_path: release-notes.md
-          draft: false
-          prerelease: false
+          draft: ${{ env.RELEASE_DRAFT }}
+          prerelease: ${{ env.RELEASE_PRERELEASE }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
