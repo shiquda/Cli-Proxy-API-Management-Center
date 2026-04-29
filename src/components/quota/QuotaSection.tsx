@@ -9,8 +9,9 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { triggerHeaderRefresh } from '@/hooks/useHeaderRefresh';
 import { useNotificationStore, useQuotaStore, useThemeStore } from '@/stores';
-import type { AuthFileItem, ResolvedTheme } from '@/types';
+import type { AuthFileItem, CodexQuotaState, ResolvedTheme } from '@/types';
 import { getStatusFromError } from '@/utils/quota';
+import { CodexAggregateSummary } from './CodexAggregateSummary';
 import { QuotaCard } from './QuotaCard';
 import type { QuotaStatusState } from './QuotaCard';
 import { useQuotaLoader } from './useQuotaLoader';
@@ -306,6 +307,12 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
         />
       ) : (
         <>
+          {config.type === 'codex' && (
+            <CodexAggregateSummary
+              files={filteredFiles}
+              quota={quota as unknown as Record<string, CodexQuotaState>}
+            />
+          )}
           <div ref={gridRef} className={config.gridClassName}>
             {pageItems.map((item) => (
               <QuotaCard

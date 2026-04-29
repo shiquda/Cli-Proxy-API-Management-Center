@@ -413,6 +413,102 @@
   padding: $spacing-xs $spacing-sm;
 }
 
+.codexAggregatePanel {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+  margin-bottom: $spacing-md;
+  padding: $spacing-md;
+  border: 1px solid var(--border-color);
+  border-radius: $radius-lg;
+  background:
+    linear-gradient(180deg, rgba(234, 231, 255, 0.14), rgba(234, 231, 255, 0)),
+    var(--bg-primary);
+}
+
+.codexAggregateHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: $spacing-md;
+  min-width: 0;
+
+  @include mobile {
+    flex-direction: column;
+    gap: $spacing-sm;
+  }
+}
+
+.codexAggregateTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+}
+
+.codexAggregateSubtitle,
+.codexAggregateStatus,
+.codexAggregatePlans {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.codexAggregateStatus {
+  text-align: right;
+  max-width: 52%;
+
+  @include mobile {
+    text-align: left;
+    max-width: none;
+  }
+}
+
+.codexAggregatePlans {
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  background-color: var(--bg-secondary);
+}
+
+.codexAggregateWindows {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: $spacing-md;
+
+  @include mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.codexAggregateWindow {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+  min-width: 0;
+}
+
+.codexAggregateWindowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: $spacing-sm;
+}
+
+.codexAggregateMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.45;
+}
+
+.codexAggregateWarning {
+  font-size: 12px;
+  color: var(--warning-text);
+  line-height: 1.45;
+}
+
 .codexPlan {
   display: flex;
   align-items: center;
