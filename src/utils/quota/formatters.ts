@@ -33,17 +33,21 @@ export function formatUnixSeconds(value: number | null): string {
 }
 
 export function formatCodexResetLabel(window?: CodexUsageWindow | null): string {
-  if (!window) return '-';
+  const resetAtSeconds = resolveCodexResetAtSeconds(window);
+  return formatUnixSeconds(resetAtSeconds);
+}
+
+export function resolveCodexResetAtSeconds(window?: CodexUsageWindow | null): number | null {
+  if (!window) return null;
   const resetAt = normalizeNumberValue(window.reset_at ?? window.resetAt);
   if (resetAt !== null && resetAt > 0) {
-    return formatUnixSeconds(resetAt);
+    return resetAt;
   }
   const resetAfter = normalizeNumberValue(window.reset_after_seconds ?? window.resetAfterSeconds);
   if (resetAfter !== null && resetAfter > 0) {
-    const targetSeconds = Math.floor(Date.now() / 1000 + resetAfter);
-    return formatUnixSeconds(targetSeconds);
+    return Math.floor(Date.now() / 1000 + resetAfter);
   }
-  return '-';
+  return null;
 }
 
 export function createStatusError(message: string, status?: number): Error & { status?: number } {

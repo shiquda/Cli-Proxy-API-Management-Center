@@ -62,6 +62,7 @@ import {
   formatCodexResetLabel,
   formatQuotaResetTime,
   formatKimiResetHint,
+  resolveCodexResetAtSeconds,
   buildAntigravityQuotaGroups,
   buildGeminiCliQuotaBuckets,
   buildKimiQuotaRows,
@@ -253,6 +254,13 @@ const buildCodexQuotaWindows = (payload: CodexUsagePayload, t: TFunction): Codex
   ) => {
     if (!window) return;
     const resetLabel = formatCodexResetLabel(window);
+    const windowSeconds = normalizeNumberValue(
+      window.limit_window_seconds ?? window.limitWindowSeconds
+    );
+    const resetAfterSeconds = normalizeNumberValue(
+      window.reset_after_seconds ?? window.resetAfterSeconds
+    );
+    const resetAtSeconds = resolveCodexResetAtSeconds(window);
     const usedPercentRaw = normalizeNumberValue(window.used_percent ?? window.usedPercent);
     const isLimitReached = Boolean(limitReached) || allowed === false;
     const usedPercent = usedPercentRaw ?? (isLimitReached && resetLabel !== '-' ? 100 : null);
@@ -263,6 +271,9 @@ const buildCodexQuotaWindows = (payload: CodexUsagePayload, t: TFunction): Codex
       labelParams,
       usedPercent,
       resetLabel,
+      windowSeconds,
+      resetAtSeconds,
+      resetAfterSeconds,
     });
   };
 
