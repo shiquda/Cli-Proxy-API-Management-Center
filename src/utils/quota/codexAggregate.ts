@@ -58,16 +58,18 @@ export interface CodexAggregateSummary {
   sevenDay: CodexAggregateWindow;
 }
 
+const FREE_GO_SEVEN_DAY_WEIGHT = 1 / 12;
+
 const CODEX_PLAN_BUCKETS: Record<string, CodexPlanBucket> = {
   free: {
     id: 'free',
     labelKey: 'codex_quota.plan_free',
-    weights: { fiveHour: 0, sevenDay: 0.05 },
+    weights: { fiveHour: 0, sevenDay: FREE_GO_SEVEN_DAY_WEIGHT },
   },
   go: {
     id: 'go',
     labelKey: 'codex_quota.plan_go',
-    weights: { fiveHour: 0, sevenDay: 0.05 },
+    weights: { fiveHour: 0, sevenDay: FREE_GO_SEVEN_DAY_WEIGHT },
   },
   plus: {
     id: 'plus',
