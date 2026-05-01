@@ -34,7 +34,7 @@ function CodexAggregateWindowRow({ window }: { window: CodexAggregateWindow }) {
   const nextRecovery = window.nextRecovery
     ? t('codex_quota.aggregate_next_recovery', {
         time: formatUnixSeconds(window.nextRecovery.resetAtSeconds),
-        percent: window.nextRecovery.percent.toFixed(1),
+        percent: window.nextRecovery.targetPercent.toFixed(1),
         capacity: formatCapacity(window.nextRecovery.capacity),
       })
     : t('codex_quota.aggregate_no_recovery');
