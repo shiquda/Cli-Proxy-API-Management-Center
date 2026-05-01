@@ -66,7 +66,12 @@ interface QuotaCardProps<TState extends QuotaStatusState> {
   defaultType: string;
   canRefresh?: boolean;
   onRefresh?: () => void;
-  renderQuotaItems: (quota: TState, t: TFunction, helpers: QuotaRenderHelpers) => ReactNode;
+  renderQuotaItems: (
+    quota: TState,
+    t: TFunction,
+    helpers: QuotaRenderHelpers,
+    item: AuthFileItem
+  ) => ReactNode;
 }
 
 export function QuotaCard<TState extends QuotaStatusState>({
@@ -143,7 +148,7 @@ export function QuotaCard<TState extends QuotaStatusState>({
             })}
           </div>
         ) : quota ? (
-          renderQuotaItems(quota, t, { styles, QuotaProgressBar })
+          renderQuotaItems(quota, t, { styles, QuotaProgressBar }, item)
         ) : (
           <div className={styles.quotaMessage}>{t(idleMessageKey)}</div>
         )}
