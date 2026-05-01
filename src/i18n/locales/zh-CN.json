@@ -705,7 +705,7 @@
     "aggregate_plan_part": "{{plan}} {{count}} 个（5h {{fiveHour}}x / 7d {{sevenDay}}x）",
     "aggregate_capacity": "可用 {{remaining}} / {{total}} Plus 等效额度",
     "aggregate_no_capacity": "暂无可统计容量",
-    "aggregate_next_recovery": "下一次恢复 {{time}} +{{percent}}%（{{capacity}}x）",
+    "aggregate_next_recovery": "下一次恢复 {{time}} 恢复到 {{percent}}%（{{capacity}}x）",
     "aggregate_no_recovery": "暂无待恢复用量",
     "aggregate_full_recovery": "完全回满 {{time}}",
     "aggregate_full_recovery_unknown": "完全回满时间未知",

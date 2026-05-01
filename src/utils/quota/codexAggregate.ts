@@ -30,6 +30,7 @@ export interface CodexAggregateRecovery {
   resetAtSeconds: number;
   capacity: number;
   percent: number;
+  targetPercent: number;
 }
 
 export interface CodexAggregateWindow {
@@ -210,6 +211,9 @@ function aggregateWindow(
       resetAtSeconds: earliestReset,
       capacity,
       percent: (capacity / result.totalCapacity) * 100,
+      targetPercent: clampPercent(
+        ((result.remainingCapacity + capacity) / result.totalCapacity) * 100
+      ),
     };
   }
 

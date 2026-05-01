@@ -87,6 +87,7 @@ type QuotaType = 'antigravity' | 'claude' | 'codex' | 'gemini-cli' | 'kimi';
 const DEFAULT_ANTIGRAVITY_PROJECT_ID = 'bamboo-precept-lgxtn';
 const QUOTA_PROGRESS_HIGH_THRESHOLD = 70;
 const QUOTA_PROGRESS_MEDIUM_THRESHOLD = 30;
+const INTEGER_STRING_PATTERN = /^[+-]?\d+$/;
 const geminiCliSupplementaryRequestIds = new Map<string, number>();
 const geminiCliSupplementaryCache = new Map<
   string,
@@ -122,7 +123,12 @@ export interface QuotaConfig<TState, TData> {
   controlsClassName: string;
   controlClassName: string;
   gridClassName: string;
-  renderQuotaItems: (quota: TState, t: TFunction, helpers: QuotaRenderHelpers) => ReactNode;
+  renderQuotaItems: (
+    quota: TState,
+    t: TFunction,
+    helpers: QuotaRenderHelpers,
+    item: AuthFileItem
+  ) => ReactNode;
 }
 
 const resolveAntigravityProjectId = async (file: AuthFileItem): Promise<string> => {
@@ -746,10 +752,37 @@ const renderAntigravityItems = (
 const PREMIUM_GEMINI_CLI_TIER_IDS = new Set(['g1-ultra-tier']);
 const PREMIUM_CODEX_PLAN_TYPES = new Set(['pro', 'prolite', 'pro-lite', 'pro_lite']);
 
+const parseAuthFilePriority = (file: AuthFileItem): number | null => {
+  const value = file.priority ?? file['priority'];
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) ? value : null;
+  }
+
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || !INTEGER_STRING_PATTERN.test(trimmed)) return null;
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+};
+
+const resolvePriorityBadgeClassName = (
+  styleMap: QuotaRenderHelpers['styles'],
+  priority: number
+): string => {
+  if (priority >= 100) {
+    return `${styleMap.codexPriorityBadge} ${styleMap.codexPriorityBadgeHigh}`;
+  }
+  if (priority >= 10) {
+    return `${styleMap.codexPriorityBadge} ${styleMap.codexPriorityBadgeMedium}`;
+  }
+  return `${styleMap.codexPriorityBadge} ${styleMap.codexPriorityBadgeLow}`;
+};
+
 const renderCodexItems = (
   quota: CodexQuotaState,
   t: TFunction,
-  helpers: QuotaRenderHelpers
+  helpers: QuotaRenderHelpers,
+  item: AuthFileItem
 ): ReactNode => {
   const { styles: styleMap, QuotaProgressBar } = helpers;
   const { createElement: h, Fragment } = React;
@@ -771,6 +804,7 @@ const renderCodexItems = (
 
   const planLabel = getPlanLabel(planType);
   const isPremiumPlan = PREMIUM_CODEX_PLAN_TYPES.has(normalizePlanType(planType) ?? '');
+  const priority = parseAuthFilePriority(item);
   const nodes: ReactNode[] = [];
 
   if (planLabel) {
@@ -780,7 +814,17 @@ const renderCodexItems = (
         'div',
         { key: 'plan', className: styleMap.codexPlan },
         h('span', { className: styleMap.codexPlanLabel }, t('codex_quota.plan_label')),
-        h('span', { className: valueClass }, planLabel)
+        h('span', { className: valueClass }, planLabel),
+        priority !== null
+          ? h(
+              'span',
+              {
+                className: resolvePriorityBadgeClassName(styleMap, priority),
+                title: t('common.priority'),
+              },
+              `P${priority}`
+            )
+          : null
       )
     );
   }
