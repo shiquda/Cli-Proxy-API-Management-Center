@@ -579,6 +579,39 @@
   color: var(--error-color);
 }
 
+.subscriptionValueWarning {
+  color: var(--warning-text);
+}
+
+.subscriptionValueDanger {
+  color: var(--danger-color);
+}
+
+.subscriptionRemaining {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--bg-primary) 72%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border-color) 78%, transparent);
+}
+
+.subscriptionRemainingWarning {
+  color: var(--warning-text);
+  background: color-mix(in srgb, var(--warning-bg) 72%, transparent);
+  border-color: color-mix(in srgb, var(--warning-border) 78%, transparent);
+}
+
+.subscriptionRemainingDanger {
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 11%, var(--bg-primary));
+  border-color: color-mix(in srgb, var(--danger-color) 42%, var(--border-color));
+}
+
 .subscriptionMockBadge {
   display: inline-flex;
   align-items: center;

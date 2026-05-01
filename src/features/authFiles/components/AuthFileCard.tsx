@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
 import type { TFunction } from 'i18next';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
@@ -35,6 +36,7 @@ import styles from '@/pages/AuthFilesPage.module.scss';
 
 const HEALTHY_STATUS_MESSAGES = new Set(['ok', 'healthy', 'ready', 'success', 'available']);
 const PREMIUM_CODEX_PLAN_TYPES = new Set(['pro', 'prolite', 'pro-lite', 'pro_lite']);
+const INITIAL_NOW_MS = Date.now();
 
 const getCodexPlanLabel = (t: TFunction, planType?: string | null): string | null => {
   const normalized = normalizePlanType(planType);
@@ -82,6 +84,13 @@ const resolveQuotaType = (file: AuthFileItem): QuotaProviderType | null => {
 
 export function AuthFileCard(props: AuthFileCardProps) {
   const { t } = useTranslation();
+  const [nowMs, setNowMs] = useState(INITIAL_NOW_MS);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const {
     file,
     compact,
@@ -125,7 +134,7 @@ export function AuthFileCard(props: AuthFileCardProps) {
   );
   const codexSubscriptionExpired =
     (codexSubscription?.activeUntilMs ?? null) !== null &&
-    (codexSubscription?.activeUntilMs ?? 0) < Date.now();
+    (codexSubscription?.activeUntilMs ?? 0) < nowMs;
 
   const showQuotaLayout = Boolean(quotaType) && !isRuntimeOnly && !compact;
 
