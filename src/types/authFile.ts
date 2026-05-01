@@ -23,6 +23,12 @@ export interface AuthFileItem {
   provider?: string;
   size?: number;
   authIndex?: string | number | null;
+  plan_type?: string | null;
+  planType?: string | null;
+  chatgpt_subscription_active_start?: string | number | null;
+  chatgptSubscriptionActiveStart?: string | number | null;
+  chatgpt_subscription_active_until?: string | number | null;
+  chatgptSubscriptionActiveUntil?: string | number | null;
   runtimeOnly?: boolean | string;
   disabled?: boolean;
   unavailable?: boolean;

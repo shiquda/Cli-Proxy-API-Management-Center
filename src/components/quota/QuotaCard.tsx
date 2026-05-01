@@ -6,10 +6,31 @@ import { useTranslation } from 'react-i18next';
 import type { ReactElement, ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 import type { AuthFileItem, ResolvedTheme, ThemeColors } from '@/types';
-import { TYPE_COLORS } from '@/utils/quota';
+import { normalizePlanType, resolveCodexSubscriptionInfo, TYPE_COLORS } from '@/utils/quota';
+import { formatDateTime } from '@/utils/format';
 import styles from '@/pages/QuotaPage.module.scss';
 
 type QuotaStatus = 'idle' | 'loading' | 'success' | 'error';
+const PREMIUM_CODEX_PLAN_TYPES = new Set(['pro', 'prolite', 'pro-lite', 'pro_lite']);
+
+const getCodexPlanLabel = (t: TFunction, planType?: string | null): string | null => {
+  const normalized = normalizePlanType(planType);
+  if (!normalized) return null;
+  if (normalized === 'pro') return t('codex_quota.plan_pro');
+  if (PREMIUM_CODEX_PLAN_TYPES.has(normalized) && normalized !== 'pro') {
+    return t('codex_quota.plan_prolite');
+  }
+  if (normalized === 'plus') return t('codex_quota.plan_plus');
+  if (normalized === 'team') return t('codex_quota.plan_team');
+  if (normalized === 'free') return t('codex_quota.plan_free');
+  if (normalized === 'go') return t('codex_quota.plan_go');
+  return planType || normalized;
+};
+
+const formatSubscriptionDate = (valueMs: number | null): string => {
+  if (valueMs === null) return '-';
+  return formatDateTime(new Date(valueMs));
+};
 
 export interface QuotaStatusState {
   status: QuotaStatus;
@@ -89,6 +110,7 @@ export function QuotaCard<TState extends QuotaStatusState>({
   const { t } = useTranslation();
 
   const displayType = item.type || item.provider || defaultType;
+  const normalizedDisplayType = String(displayType).trim().toLowerCase();
   const typeColorSet = TYPE_COLORS[displayType] || TYPE_COLORS.unknown;
   const typeColor: ThemeColors =
     resolvedTheme === 'dark' && typeColorSet.dark ? typeColorSet.dark : typeColorSet.light;
@@ -100,6 +122,14 @@ export function QuotaCard<TState extends QuotaStatusState>({
     quota?.error || t('common.unknown_error')
   );
   const idleMessageKey = onRefresh ? `${i18nPrefix}.idle` : (cardIdleMessageKey ?? `${i18nPrefix}.idle`);
+  const codexSubscription =
+    normalizedDisplayType === 'codex'
+      ? resolveCodexSubscriptionInfo(item, { useMockFallback: import.meta.env.DEV })
+      : null;
+  const codexPlanLabel = getCodexPlanLabel(t, codexSubscription?.planType);
+  const codexSubscriptionExpired =
+    (codexSubscription?.activeUntilMs ?? null) !== null &&
+    (codexSubscription?.activeUntilMs ?? 0) < Date.now();
 
   const getTypeLabel = (type: string): string => {
     const key = `auth_files.filter_${type}`;
@@ -124,6 +154,50 @@ export function QuotaCard<TState extends QuotaStatusState>({
         </span>
         <span className={styles.fileName}>{item.name}</span>
       </div>
+
+      {codexSubscription && (
+        <div className={styles.subscriptionPanel}>
+          <div className={styles.subscriptionItem}>
+            <span className={styles.subscriptionLabel}>
+              {t('auth_files.subscription_plan')}
+            </span>
+            <span
+              className={`${styles.subscriptionValue} ${
+                PREMIUM_CODEX_PLAN_TYPES.has(normalizePlanType(codexSubscription.planType) ?? '')
+                  ? styles.subscriptionValuePremium
+                  : ''
+              }`}
+            >
+              {codexPlanLabel || '-'}
+            </span>
+          </div>
+          <div className={styles.subscriptionItem}>
+            <span className={styles.subscriptionLabel}>
+              {t('auth_files.subscription_active_start')}
+            </span>
+            <span className={styles.subscriptionValue}>
+              {formatSubscriptionDate(codexSubscription.activeStartMs)}
+            </span>
+          </div>
+          <div className={styles.subscriptionItem}>
+            <span className={styles.subscriptionLabel}>
+              {t('auth_files.subscription_active_until')}
+            </span>
+            <span
+              className={`${styles.subscriptionValue} ${
+                codexSubscriptionExpired ? styles.subscriptionValueExpired : ''
+              }`}
+            >
+              {formatSubscriptionDate(codexSubscription.activeUntilMs)}
+            </span>
+          </div>
+          {codexSubscription.isMock && (
+            <span className={styles.subscriptionMockBadge}>
+              {t('auth_files.subscription_mock')}
+            </span>
+          )}
+        </div>
+      )}
 
       <div className={styles.quotaSection}>
         {quotaStatus === 'loading' ? (
