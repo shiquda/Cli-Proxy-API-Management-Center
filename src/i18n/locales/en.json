@@ -694,7 +694,7 @@
     "aggregate_plan_part": "{{plan}} {{count}} (5h {{fiveHour}}x / 7d {{sevenDay}}x)",
     "aggregate_capacity": "{{remaining}} / {{total}} Plus-equivalent units available",
     "aggregate_no_capacity": "No countable capacity",
-    "aggregate_next_recovery": "Next recovery {{time}} +{{percent}}% ({{capacity}}x)",
+    "aggregate_next_recovery": "Next recovery {{time}} to {{percent}}% ({{capacity}}x)",
     "aggregate_no_recovery": "No pending recovery",
     "aggregate_full_recovery": "Full recovery {{time}}",
     "aggregate_full_recovery_unknown": "Full recovery unknown",

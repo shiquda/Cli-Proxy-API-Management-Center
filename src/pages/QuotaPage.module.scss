@@ -515,6 +515,7 @@
   gap: 6px;
   font-size: 12px;
   color: var(--text-secondary);
+  flex-wrap: wrap;
 }
 
 .codexPlanLabel {
@@ -525,6 +526,39 @@
   font-weight: 600;
   color: var(--text-primary);
   text-transform: capitalize;
+}
+
+.codexPriorityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 20px;
+  padding: 0 7px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.codexPriorityBadgeHigh {
+  color: #047857;
+  background-color: rgba(16, 185, 129, 0.14);
+  border-color: rgba(16, 185, 129, 0.32);
+}
+
+.codexPriorityBadgeMedium {
+  color: #a16207;
+  background-color: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.32);
+}
+
+.codexPriorityBadgeLow {
+  color: #2563eb;
+  background-color: rgba(59, 130, 246, 0.13);
+  border-color: rgba(59, 130, 246, 0.28);
 }
 
 .premiumPlanValue {

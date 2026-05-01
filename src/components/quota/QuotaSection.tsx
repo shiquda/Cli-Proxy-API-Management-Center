@@ -28,6 +28,20 @@ type ViewMode = 'paged' | 'all';
 
 const MAX_ITEMS_PER_PAGE = 25;
 const MAX_SHOW_ALL_THRESHOLD = 30;
+const INTEGER_STRING_PATTERN = /^[+-]?\d+$/;
+
+const parseAuthFilePriority = (file: AuthFileItem): number | null => {
+  const value = file.priority ?? file['priority'];
+  if (typeof value === 'number') {
+    return Number.isSafeInteger(value) ? value : null;
+  }
+
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || !INTEGER_STRING_PATTERN.test(trimmed)) return null;
+  const parsed = Number.parseInt(trimmed, 10);
+  return Number.isSafeInteger(parsed) ? parsed : null;
+};
 
 interface QuotaPaginationState<T> {
   pageSize: number;
@@ -117,10 +131,26 @@ export function QuotaSection<TState extends QuotaStatusState, TData>({
   const [viewMode, setViewMode] = useState<ViewMode>('paged');
   const [showTooManyWarning, setShowTooManyWarning] = useState(false);
 
-  const filteredFiles = useMemo(() => files.filter((file) => config.filterFn(file)), [
-    files,
-    config
-  ]);
+  const filteredFiles = useMemo(() => {
+    const matchedFiles = files.filter((file) => config.filterFn(file));
+    if (config.type !== 'codex') {
+      return matchedFiles;
+    }
+
+    return matchedFiles
+      .map((file, index) => ({
+        file,
+        index,
+        priority: parseAuthFilePriority(file),
+      }))
+      .sort((a, b) => {
+        const priorityA = a.priority ?? Number.NEGATIVE_INFINITY;
+        const priorityB = b.priority ?? Number.NEGATIVE_INFINITY;
+        if (priorityA !== priorityB) return priorityB - priorityA;
+        return a.index - b.index;
+      })
+      .map((item) => item.file);
+  }, [files, config]);
   const showAllAllowed = filteredFiles.length <= MAX_SHOW_ALL_THRESHOLD;
   const effectiveViewMode: ViewMode = viewMode === 'all' && !showAllAllowed ? 'paged' : viewMode;
 

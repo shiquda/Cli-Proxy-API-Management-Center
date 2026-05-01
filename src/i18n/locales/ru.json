@@ -691,7 +691,7 @@
     "aggregate_plan_part": "{{plan}} {{count}} (5h {{fiveHour}}x / 7d {{sevenDay}}x)",
     "aggregate_capacity": "Доступно {{remaining}} / {{total}} Plus-эквивалентных единиц",
     "aggregate_no_capacity": "Нет учитываемой ёмкости",
-    "aggregate_next_recovery": "Следующее восстановление {{time}} +{{percent}}% ({{capacity}}x)",
+    "aggregate_next_recovery": "Следующее восстановление {{time}} до {{percent}}% ({{capacity}}x)",
     "aggregate_no_recovery": "Нет ожидаемого восстановления",
     "aggregate_full_recovery": "Полное восстановление {{time}}",
     "aggregate_full_recovery_unknown": "Время полного восстановления неизвестно",
