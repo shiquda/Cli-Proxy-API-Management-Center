@@ -25,6 +25,18 @@ export interface AuthFileItem {
   provider?: string;
   size?: number;
   authIndex?: string | number | null;
+  'auth-index'?: string | number | null;
+  auth_index?: string | number | null;
+  chatgpt_account_id?: string | null;
+  chatgptAccountId?: string | null;
+  id_token?: unknown;
+  idToken?: unknown;
+  plan_type?: string | null;
+  planType?: string | null;
+  chatgpt_subscription_active_start?: string | number | null;
+  chatgptSubscriptionActiveStart?: string | number | null;
+  chatgpt_subscription_active_until?: string | number | null;
+  chatgptSubscriptionActiveUntil?: string | number | null;
   runtimeOnly?: boolean | string;
   disabled?: boolean;
   unavailable?: boolean;

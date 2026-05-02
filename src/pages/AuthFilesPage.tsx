@@ -24,6 +24,7 @@ import { IconFilterAll } from '@/components/ui/icons';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ToggleSwitch } from '@/components/ui/ToggleSwitch';
 import { copyToClipboard } from '@/utils/clipboard';
+import { resolveCodexSubscriptionInfo } from '@/utils/quota';
 import {
   MAX_CARD_PAGE_SIZE,
   MIN_CARD_PAGE_SIZE,
@@ -58,6 +59,7 @@ import {
   type AuthFilesSortMode,
 } from '@/features/authFiles/uiState';
 import { useAuthStore, useNotificationStore, useThemeStore } from '@/stores';
+import type { AuthFileItem } from '@/types';
 import styles from './AuthFilesPage.module.scss';
 
 const easePower3Out = (progress: number) => 1 - (1 - progress) ** 4;
@@ -74,6 +76,15 @@ const buildWildcardSearch = (value: string): RegExp | null => {
   if (!value.includes('*')) return null;
   const pattern = value.split('*').map(escapeWildcardSearchSegment).join('.*');
   return new RegExp(pattern, 'i');
+};
+
+const resolveSubscriptionExpirySortValue = (file: AuthFileItem) => {
+  const provider = normalizeProviderKey(String(file.provider ?? file.type ?? 'unknown'));
+  if (provider !== 'codex') return null;
+  return (
+    resolveCodexSubscriptionInfo(file, { useMockFallback: import.meta.env.DEV })?.activeUntilMs ??
+    null
+  );
 };
 
 export function AuthFilesPage() {
@@ -371,6 +382,7 @@ export function AuthFilesPage() {
       { value: 'default', label: t('auth_files.sort_default') },
       { value: 'az', label: t('auth_files.sort_az') },
       { value: 'priority', label: t('auth_files.sort_priority') },
+      { value: 'subscription-expiry', label: t('auth_files.sort_subscription_expiry') },
     ],
     [t]
   );
@@ -421,6 +433,19 @@ export function AuthFilesPage() {
         const pa = parsePriorityValue(a.priority ?? a['priority']) ?? 0;
         const pb = parsePriorityValue(b.priority ?? b['priority']) ?? 0;
         return pb - pa; // 高优先级排前面
+      });
+    } else if (sortMode === 'subscription-expiry') {
+      copy.sort((a, b) => {
+        const aExpiry = resolveSubscriptionExpirySortValue(a);
+        const bExpiry = resolveSubscriptionExpirySortValue(b);
+        if (aExpiry !== null && bExpiry !== null) {
+          const expiryCompare = aExpiry - bExpiry;
+          if (expiryCompare !== 0) return expiryCompare;
+          return a.name.localeCompare(b.name);
+        }
+        if (aExpiry !== null) return -1;
+        if (bExpiry !== null) return 1;
+        return a.name.localeCompare(b.name);
       });
     }
     return copy;

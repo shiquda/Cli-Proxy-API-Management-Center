@@ -1,3 +1,22 @@
+# 本 Fork：Codex 账号池运营版
+
+这个 fork 是 CLI Proxy API Management Center 的 **Codex 账号池运营增强版**。相比偏通用管理后台形态的原始界面，它的特色是把大量 Codex 账号变成可观察、可排序、可分析的账号池，而不是只把凭据当作一组独立文件来管理。
+
+## 分支特色
+
+- **Codex 优先的账号池视图**：围绕 Codex 认证文件与 key 条目集中展示 `auth_index`、启用状态、优先级、备注、可用模型，以及后端暴露的订阅元数据。
+- **订阅到期追踪**：认证文件里保留套餐、开始时间、到期时间等完整上下文；配额管理里突出到期日期和剩余天数，并支持按订阅到期排序，让先到期账号排在前面。
+- **按优先级组织的配额运营**：Codex 配额卡片按配置优先级排序，展示短周期、周周期、code review 与额外 rate limit 窗口，包括重置时间和限制状态。
+- **账号池容量汇总**：提供 Codex 加权配额汇总和状态条，帮助从整个号池角度判断可用容量，而不是逐个账号手动检查。
+- **账号质量分析**：结合后端 usage snapshot，按 API、模型、source、`auth_index` 关联成功/失败、Token 拆分、RPM/TPM 时间窗和质量统计卡片，用于判断账号质量和使用分布。
+- **运维友好的发布形态**：继续发布单文件 `management.html`，可以作为 CLIProxyAPI 部署里的替换式管理面板使用。
+
+这些特色对齐后端管理面提供的数据，包括 `/v0/management/auth-files`、`/v0/management/usage`、Codex key 配置、provider priority 字段，以及从 Codex auth metadata / id token 中提取的订阅字段。这个 fork 仍然只是管理前端，不实现代理转发，也不改变 provider 侧配额规则。
+
+---
+
+以下保留原始 README 内容。
+
 # CLI Proxy API 管理中心
 
 用于管理与故障排查 **CLI Proxy API** 的单文件 Web UI（React + TypeScript），通过 **Management API** 完成配置、凭据与日志等管理操作。

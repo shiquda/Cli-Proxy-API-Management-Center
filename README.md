@@ -1,3 +1,22 @@
+# This Fork: Codex Account Pool Operations Edition
+
+This fork is a specialized edition of the CLI Proxy API Management Center for operating a **Codex account pool**. Compared with the upstream-style general management UI, its distinctive value is making many Codex accounts observable, sortable, and analyzable from one screen instead of treating credentials as isolated files.
+
+## Fork Features
+
+- **Codex-first account pool view**: brings Codex auth files and key entries together with `auth_index`, enabled/disabled state, priority, notes, model availability, and backend-exposed subscription metadata.
+- **Subscription expiry tracking**: shows Codex subscription plan/start/expiry in auth-file context, highlights quota-page expiry status by remaining days, and adds expiry sorting so accounts that expire first rise to the top.
+- **Priority-aware quota operations**: orders Codex quota cards by configured priority and surfaces short-window, weekly, code-review, and additional rate-limit windows with reset timing and limit state.
+- **Pool capacity summary**: adds weighted Codex quota summaries and status bars so operators can judge total usable capacity across the pool, not just one credential at a time.
+- **Account quality analysis**: correlates usage snapshots by API, model, source, and `auth_index`, including success/failure counts, token breakdowns, RPM/TPM windows, and quality-oriented stat cards.
+- **Operational release format**: continues publishing a standalone `management.html`, so this fork can be used as a drop-in management panel for a CLIProxyAPI deployment.
+
+These features align with backend management surfaces such as `/v0/management/auth-files`, `/v0/management/usage`, Codex key configuration, provider priority fields, and Codex subscription claims extracted from auth metadata. This fork is still only a management frontend; it does not implement proxy forwarding or alter provider-side quota behavior.
+
+---
+
+The original README is kept below.
+
 # CLI Proxy API Management Center
 
 A single-file Web UI (React + TypeScript) for operating and troubleshooting the **CLI Proxy API** via its **Management API** (config, credentials, and logs).

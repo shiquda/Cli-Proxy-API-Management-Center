@@ -1,4 +1,6 @@
 import { useTranslation } from 'react-i18next';
+import { useEffect, useState } from 'react';
+import type { TFunction } from 'i18next';
 import { Button } from '@/components/ui/Button';
 import { LoadingSpinner } from '@/components/ui/LoadingSpinner';
 import { SelectionCheckbox } from '@/components/ui/SelectionCheckbox';
@@ -12,14 +14,14 @@ import {
 } from '@/components/ui/icons';
 import { ProviderStatusBar } from '@/components/providers/ProviderStatusBar';
 import type { AuthFileItem } from '@/types';
-import { resolveAuthProvider } from '@/utils/quota';
+import { normalizePlanType, resolveAuthProvider, resolveCodexSubscriptionInfo } from '@/utils/quota';
 import {
   normalizeRecentRequestAuthIndex,
   normalizeRecentRequestBuckets,
   normalizeUsageTotal,
   statusBarDataFromRecentRequests,
 } from '@/utils/recentRequests';
-import { formatFileSize } from '@/utils/format';
+import { formatDateTime, formatFileSize } from '@/utils/format';
 import {
   QUOTA_PROVIDER_TYPES,
   formatModified,
@@ -37,6 +39,27 @@ import { AuthFileQuotaSection } from '@/features/authFiles/components/AuthFileQu
 import styles from '@/pages/AuthFilesPage.module.scss';
 
 const HEALTHY_STATUS_MESSAGES = new Set(['ok', 'healthy', 'ready', 'success', 'available']);
+const PREMIUM_CODEX_PLAN_TYPES = new Set(['pro', 'prolite', 'pro-lite', 'pro_lite']);
+const INITIAL_NOW_MS = Date.now();
+
+const getCodexPlanLabel = (t: TFunction, planType?: string | null): string | null => {
+  const normalized = normalizePlanType(planType);
+  if (!normalized) return null;
+  if (normalized === 'pro') return t('codex_quota.plan_pro');
+  if (PREMIUM_CODEX_PLAN_TYPES.has(normalized) && normalized !== 'pro') {
+    return t('codex_quota.plan_prolite');
+  }
+  if (normalized === 'plus') return t('codex_quota.plan_plus');
+  if (normalized === 'team') return t('codex_quota.plan_team');
+  if (normalized === 'free') return t('codex_quota.plan_free');
+  if (normalized === 'go') return t('codex_quota.plan_go');
+  return planType || normalized;
+};
+
+const formatSubscriptionDate = (valueMs: number | null): string => {
+  if (valueMs === null) return '-';
+  return formatDateTime(new Date(valueMs));
+};
 
 export type AuthFileCardProps = {
   file: AuthFileItem;
@@ -64,6 +87,13 @@ const resolveQuotaType = (file: AuthFileItem): QuotaProviderType | null => {
 
 export function AuthFileCard(props: AuthFileCardProps) {
   const { t } = useTranslation();
+  const [nowMs, setNowMs] = useState(INITIAL_NOW_MS);
+
+  useEffect(() => {
+    const intervalId = window.setInterval(() => setNowMs(Date.now()), 60_000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
   const {
     file,
     compact,
@@ -96,6 +126,21 @@ export function AuthFileCard(props: AuthFileCardProps) {
 
   const quotaType =
     quotaFilterType && resolveQuotaType(file) === quotaFilterType ? quotaFilterType : null;
+  const resolvedProvider = resolveAuthProvider(file);
+  const codexSubscription =
+    resolvedProvider === 'codex'
+      ? resolveCodexSubscriptionInfo(file, { useMockFallback: import.meta.env.DEV })
+      : null;
+  const codexPlanLabel = getCodexPlanLabel(t, codexSubscription?.planType);
+  const codexSubscriptionStartLabel = formatSubscriptionDate(
+    codexSubscription?.activeStartMs ?? null
+  );
+  const codexSubscriptionUntilLabel = formatSubscriptionDate(
+    codexSubscription?.activeUntilMs ?? null
+  );
+  const codexSubscriptionExpired =
+    (codexSubscription?.activeUntilMs ?? null) !== null &&
+    (codexSubscription?.activeUntilMs ?? 0) < nowMs;
 
   const showQuotaLayout = Boolean(quotaType) && !isRuntimeOnly && !compact;
 
@@ -112,7 +157,7 @@ export function AuthFileCard(props: AuthFileCardProps) {
               ? styles.kimiCard
               : '';
 
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndexKey = normalizeRecentRequestAuthIndex(rawAuthIndex);
   const statusData =
     (authIndexKey && statusBarCache.get(authIndexKey)) ||
@@ -220,6 +265,52 @@ export function AuthFileCard(props: AuthFileCardProps) {
               </div>
             )}
           </div>
+
+          {codexSubscription && (
+            <div className={styles.subscriptionPanel}>
+              <div className={styles.subscriptionItem}>
+                <span className={styles.subscriptionLabel}>
+                  {t('auth_files.subscription_plan')}
+                </span>
+                <span
+                  className={`${styles.subscriptionValue} ${
+                    PREMIUM_CODEX_PLAN_TYPES.has(
+                      normalizePlanType(codexSubscription.planType) ?? ''
+                    )
+                      ? styles.subscriptionValuePremium
+                      : ''
+                  }`}
+                >
+                  {codexPlanLabel || '-'}
+                </span>
+              </div>
+              {!compact && (
+                <div className={styles.subscriptionItem}>
+                  <span className={styles.subscriptionLabel}>
+                    {t('auth_files.subscription_active_start')}
+                  </span>
+                  <span className={styles.subscriptionValue}>{codexSubscriptionStartLabel}</span>
+                </div>
+              )}
+              <div className={styles.subscriptionItem}>
+                <span className={styles.subscriptionLabel}>
+                  {t('auth_files.subscription_active_until')}
+                </span>
+                <span
+                  className={`${styles.subscriptionValue} ${
+                    codexSubscriptionExpired ? styles.subscriptionValueExpired : ''
+                  }`}
+                >
+                  {codexSubscriptionUntilLabel}
+                </span>
+              </div>
+              {codexSubscription.isMock && (
+                <span className={styles.subscriptionMockBadge}>
+                  {t('auth_files.subscription_mock')}
+                </span>
+              )}
+            </div>
+          )}
 
           {rawStatusMessage && hasStatusWarning && (
             <div className={styles.healthStatusMessage} title={rawStatusMessage}>

@@ -167,7 +167,7 @@ const fetchAntigravityQuota = async (
   file: AuthFileItem,
   t: TFunction
 ): Promise<AntigravityQuotaGroup[]> => {
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
   if (!authIndex) {
     throw new Error(t('antigravity_quota.missing_auth_index'));
@@ -419,7 +419,7 @@ const fetchCodexQuota = async (
   file: AuthFileItem,
   t: TFunction
 ): Promise<{ planType: string | null; windows: CodexQuotaWindow[] }> => {
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
   if (!authIndex) {
     throw new Error(t('codex_quota.missing_auth_index'));
@@ -632,7 +632,7 @@ const fetchGeminiCliQuota = async (
   tierId: string | null;
   creditBalance: number | null;
 }> => {
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
   if (!authIndex) {
     throw new Error(t('gemini_cli_quota.missing_auth_index'));
@@ -1045,7 +1045,7 @@ const fetchClaudeQuota = async (
   file: AuthFileItem,
   t: TFunction
 ): Promise<{ windows: ClaudeQuotaWindow[]; extraUsage?: ClaudeExtraUsage | null; planType?: string | null }> => {
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
   if (!authIndex) {
     throw new Error(t('claude_quota.missing_auth_index'));
@@ -1305,7 +1305,7 @@ const fetchKimiQuota = async (
   file: AuthFileItem,
   t: TFunction
 ): Promise<KimiQuotaRow[]> => {
-  const rawAuthIndex = file['auth_index'] ?? file.authIndex;
+  const rawAuthIndex = file['auth-index'] ?? file['auth_index'] ?? file.authIndex;
   const authIndex = normalizeAuthIndex(rawAuthIndex);
   if (!authIndex) {
     throw new Error(t('kimi_quota.missing_auth_index'));
